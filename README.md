@@ -59,7 +59,6 @@ This encourages **community-driven knowledge sharing** in a structured yet flexi
 | Database   | **PostgreSQL + Prisma**|
 | Auth       | **Google OAuth**       |
 | UI Library | **ShadCN (Radix UI + Tailwind)** |
-| Deployment | Can be hosted on **Vercel**, **Railway**, **Render**, etc. |
 
 ---
 
