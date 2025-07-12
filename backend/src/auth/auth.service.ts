@@ -405,5 +405,7 @@ async register(dto: RegisterUserDto) {
   ): Promise<boolean> {
     return bcrypt.compare(inputPassword, hashedPassword);
   }
+
+  
   }
 

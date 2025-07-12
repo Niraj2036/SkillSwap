@@ -1,11 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete ,HttpException,Req,HttpCode} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete ,HttpException,Req,HttpCode,Query,HttpStatus} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterUserDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
+import { ApiOperation,ApiQuery } from '@nestjs/swagger';
+import { UsersService } from 'src/users/users.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService,
+    private readonly userService:UsersService
+  ) {}
 
   @Post('register')
     async register(@Body() dto: RegisterUserDto) {
@@ -179,5 +183,34 @@ export class AuthController {
       );
     }
   }
-
+@Get()
+  @ApiOperation({ summary: 'Get all users (excluding self), with filters' })
+  @ApiQuery({ name: 'availability', required: false, type: [String] })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  async getAllUsers(
+    @Req() req: any,
+    @Query('availability') availability?: string | string[],
+    @Query('search') search?: string,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+  ) {
+    try {
+      const currentUserId = BigInt(req.user.userId);
+      return await this.userService.getAllUsers({
+        currentUserId,
+        availability,
+        search,
+        page: parseInt(page),
+        limit: parseInt(limit),
+      });
+    } catch (err) {
+      console.error('Get Users Error:', err);
+      throw new HttpException(
+        'Failed to fetch users',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
