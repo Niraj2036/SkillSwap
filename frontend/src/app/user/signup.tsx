@@ -1,5 +1,6 @@
 import type React from "react";
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import {useCloudinaryUpload} from "../../api/cloudupload";
 import SpinnerOverlay from "@/components/spinner";
+import { useRegisterUser } from "@/api/auth";
 
 interface FormData {
   // Step 1: Personal Info
@@ -173,8 +175,11 @@ const TagInput = ({
     setValue("timeSlots", []);
     setValue("days", []);
   }, [watchedAvailability, setValue]);
+ const navigate = useNavigate();
+
 
   const { mutate: uploadImage, isPending } = useCloudinaryUpload();
+  const { mutate, isregPending } = useRegisterUser();
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   const files = e.target.files;
@@ -185,6 +190,7 @@ const TagInput = ({
   uploadImage(file, {
     onSuccess: (publicUrl: string) => {
       // save URL, not the raw file
+      console.log(publicUrl)
       setValue("profilePhoto", publicUrl, { shouldValidate: true });
       setPhotoPreview(publicUrl);
     },
@@ -219,9 +225,15 @@ const TagInput = ({
   };
 
   const onSubmit = (data: FormData) => {
-    console.log("Form submitted:", data);
-    // Handle form submission here
-  };
+  // data already contains your validated fields, including profilePhoto URL
+  mutate(data, {
+    onSuccess: () => navigate("/login"),
+    onError: (err) => {
+      console.error("Registration failed:", err);
+      alert("Registration failed. Please try again.");
+    },
+  });
+};
 
   return (
     <div>
@@ -781,7 +793,7 @@ const TagInput = ({
                     type="submit"
                     className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                   >
-                    Complete Signup
+                     {isregPending ? "Creating…" : "Create Account"}
                   </Button>
                 )}
               </div>

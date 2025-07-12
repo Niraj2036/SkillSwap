@@ -13,12 +13,14 @@ import { Search } from "lucide-react"
 import { SiteHeader } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { users } from "@/lib/utils"
+import OuterNavbar from "@/components/outer_navbar"
 
 export default function SkillSwapPlatformPage() {
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
-      <SiteHeader />
+      {/* <SiteHeader /> */}
+       <OuterNavbar/>
 
       <main className="container mx-auto px-4 py-6 sm:py-10 max-w-5xl">
         {/* Search and Filter */}
