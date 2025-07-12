@@ -1,40 +1,63 @@
-import type React from "react"
-import { useState, useEffect } from "react"
-import { useForm, Controller } from "react-hook-form"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Upload, X, User, Settings, ArrowLeft, ArrowRight } from "lucide-react"
+import type React from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { X, User, Settings, ArrowLeft, ArrowRight } from "lucide-react";
+import OuterNavbar from "@/components/outer_navbar";
 
 // Dynamic imports for country/city data
-import { Country, City } from 'country-state-city'
-import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
-import 'react-phone-number-input/style.css'
+import { Country, City } from "country-state-city";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
 interface FormData {
   // Step 1: Personal Info
-  fullName: string
-  email: string
-  phone: string
-  country: string
-  city: string
-  profilePhoto: FileList | null
+  fullName: string;
+  email: string;
+  phone: string;
+  country: string;
+  city: string;
+  password: string;
+  confirmPassword: string;
+  profilePhoto: FileList | null;
 
   // Step 2: Skill Info
-  availability: string
-  timeSlots: string[]
-  days: string[]
-  skillsOffered: string[]
-  skillsWanted: string[]
-  isPublic: boolean
+  availability: string;
+  timeSlots: string[];
+  days: string[];
+  skillsOffered: string[];
+  skillsWanted: string[];
+  isPublic: boolean;
 }
 
-const timeSlots = ["Morning", "Evening"]
-const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+const timeSlots = ["Morning", "Evening"];
+const weekDays = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
 const TagInput = ({
   value,
@@ -42,34 +65,42 @@ const TagInput = ({
   placeholder,
   error,
 }: {
-  value: string[]
-  onChange: (tags: string[]) => void
-  placeholder: string
-  error?: string
-}) =>{
-  const [input, setInput] = useState("")
+  value: string[];
+  onChange: (tags: string[]) => void;
+  placeholder: string;
+  error?: string;
+}) => {
+  const [input, setInput] = useState("");
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault()
+      e.preventDefault();
       if (input.trim() && !value.includes(input.trim())) {
-        onChange([...value, input.trim()])
-        setInput("")
+        onChange([...value, input.trim()]);
+        setInput("");
       }
     }
-  }
+  };
 
   const removeTag = (tagToRemove: string) => {
-    onChange(value.filter((tag) => tag !== tagToRemove))
-  }
+    onChange(value.filter((tag) => tag !== tagToRemove));
+  };
 
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
         {value.map((tag) => (
-          <Badge key={tag} variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+          <Badge
+            key={tag}
+            variant="secondary"
+            className="bg-blue-100 text-blue-800 hover:bg-blue-200"
+          >
             {tag}
-            <Button type="button" onClick={() => removeTag(tag)} className="ml-1 hover:text-blue-600">
+            <Button
+              type="button"
+              onClick={() => removeTag(tag)}
+              className="ml-1 hover:text-blue-600"
+            >
               <X className="h-3 w-3" />
             </Button>
           </Badge>
@@ -80,17 +111,18 @@ const TagInput = ({
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className={`border-blue-200 focus:border-blue-400 focus:ring-blue-400 ${error ? 'border-red-500' : ''}`}
+        className={`border-blue-200 focus:border-blue-400 focus:ring-blue-400 ${
+          error ? "border-red-500" : ""
+        }`}
       />
       {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
-  )
-}
+  );
+};
 
-export default function SignupForm() {
-  const [currentStep, setCurrentStep] = useState(1)
-  const [countries, setCountries] = useState<any[]>([])
-  const [cities, setCities] = useState<any[]>([])
+ const Signup = ()=> {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const {
     control,
@@ -98,7 +130,7 @@ export default function SignupForm() {
     watch,
     trigger,
     setValue,
-    formState: { errors }
+    formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
       fullName: "",
@@ -106,6 +138,8 @@ export default function SignupForm() {
       phone: "",
       country: "",
       city: "",
+      password: "",
+      confirmPassword: "",
       profilePhoto: null,
       availability: "",
       timeSlots: [],
@@ -114,93 +148,103 @@ export default function SignupForm() {
       skillsWanted: [],
       isPublic: false,
     },
-    mode: "onChange"
-  })
+    mode: "onChange",
+  });
 
-  const watchedCountry = watch("country")
-  const watchedAvailability = watch("availability")
+  const watchedCountry = watch("country");
+  const watchedAvailability = watch("availability");
 
-  // Load countries on component mount
+  const countryOptions = useMemo(() => Country.getAllCountries(), []);
+
+  const cityOptions = useMemo(() => {
+    if (!watchedCountry) return [];
+    return City.getCitiesOfCountry(watchedCountry) ?? [];
+  }, [watchedCountry]);
+
   useEffect(() => {
-    const countryData = Country.getAllCountries()
-    setCountries(countryData)
-  }, [])
+    return () => {
+      if (photoPreview) URL.revokeObjectURL(photoPreview);
+    };
+  }, [photoPreview]);
 
-  // Load cities when country changes
   useEffect(() => {
-    if (watchedCountry) {
-      const selectedCountry = countries.find(country => country.isoCode === watchedCountry)
-      if (selectedCountry) {
-        const cityData = City.getCitiesOfCountry(selectedCountry.isoCode)
-        setCities(cityData || [])
-      }
-    } else {
-      setCities([])
-    }
-    // Reset city when country changes
-    setValue("city", "")
-  }, [watchedCountry, countries, setValue])
-
-  // Reset time slots and days when availability changes
-  useEffect(() => {
-    setValue("timeSlots", [])
-    setValue("days", [])
-  }, [watchedAvailability, setValue])
+    setValue("timeSlots", []);
+    setValue("days", []);
+  }, [watchedAvailability, setValue]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (files) {
-      setValue("profilePhoto", files)
+    const files = e.target.files;
+    if (files && files[0]) {
+      setValue("profilePhoto", files);
+      // create preview
+      const url = URL.createObjectURL(files[0]);
+      setPhotoPreview(url);
     }
-  }
+  };
 
   const toggleTimeSlot = (slot: string, currentSlots: string[]) => {
     const newSlots = currentSlots.includes(slot)
       ? currentSlots.filter((s) => s !== slot)
-      : [...currentSlots, slot]
-    setValue("timeSlots", newSlots)
-    trigger("timeSlots")
-  }
+      : [...currentSlots, slot];
+    setValue("timeSlots", newSlots);
+    trigger("timeSlots");
+  };
 
   const toggleDay = (day: string, currentDays: string[]) => {
     const newDays = currentDays.includes(day)
       ? currentDays.filter((d) => d !== day)
-      : [...currentDays, day]
-    setValue("days", newDays)
-    trigger("days")
-  }
+      : [...currentDays, day];
+    setValue("days", newDays);
+    trigger("days");
+  };
 
   const handleNextStep = async () => {
-    const isValid = await trigger(["fullName", "email", "phone"])
+    const isValid = await trigger(["fullName", "email", "phone", "password", "confirmPassword"]);
     if (isValid) {
-      setCurrentStep(2)
+      setCurrentStep(2);
     }
-  }
+  };
 
   const onSubmit = (data: FormData) => {
-    console.log("Form submitted:", data)
+    console.log("Form submitted:", data);
     // Handle form submission here
-  }
+  };
 
   return (
+    <div>
+      <OuterNavbar/>
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl shadow-xl border-0 bg-white/80 backdrop-blur-sm">
         <CardHeader className="text-center space-y-2">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <div
-              className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep === 1 ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-600"}`}
+              className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                currentStep === 1
+                  ? "bg-blue-600 text-white"
+                  : "bg-blue-100 text-blue-600"
+              }`}
             >
               <User className="h-4 w-4" />
             </div>
-            <div className={`h-1 w-16 ${currentStep === 2 ? "bg-blue-600" : "bg-gray-200"} rounded`} />
             <div
-              className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep === 2 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-400"}`}
+              className={`h-1 w-16 ${
+                currentStep === 2 ? "bg-blue-600" : "bg-gray-200"
+              } rounded`}
+            />
+            <div
+              className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                currentStep === 2
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-400"
+              }`}
             >
               <Settings className="h-4 w-4" />
             </div>
           </div>
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            {currentStep === 1 ? "Personal Information" : "Skills & Availability"}
+            {currentStep === 1
+              ? "Personal Information"
+              : "Skills & Availability"}
           </CardTitle>
           <CardDescription className="text-gray-600">
             {currentStep === 1
@@ -214,7 +258,10 @@ export default function SignupForm() {
             {currentStep === 1 && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName" className="text-gray-700 font-medium">
+                  <Label
+                    htmlFor="fullName"
+                    className="text-gray-700 font-medium"
+                  >
                     Full Name
                   </Label>
                   <Controller
@@ -224,20 +271,24 @@ export default function SignupForm() {
                       required: "Full name is required",
                       minLength: {
                         value: 4,
-                        message: "Full name must be at least 4 characters"
-                      }
+                        message: "Full name must be at least 4 characters",
+                      },
                     }}
                     render={({ field }) => (
                       <Input
                         {...field}
                         id="fullName"
                         placeholder="Enter your full name"
-                        className={`border-blue-200 focus:border-blue-400 focus:ring-blue-400 ${errors.fullName ? 'border-red-500' : ''}`}
+                        className={`border-blue-200 focus:border-blue-400 focus:ring-blue-400 ${
+                          errors.fullName ? "border-red-500" : ""
+                        }`}
                       />
                     )}
                   />
                   {errors.fullName && (
-                    <p className="text-sm text-red-500">{errors.fullName.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.fullName.message}
+                    </p>
                   )}
                 </div>
 
@@ -252,8 +303,8 @@ export default function SignupForm() {
                       required: "Email is required",
                       pattern: {
                         value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: "Please enter a valid email address"
-                      }
+                        message: "Please enter a valid email address",
+                      },
                     }}
                     render={({ field }) => (
                       <Input
@@ -261,41 +312,61 @@ export default function SignupForm() {
                         id="email"
                         type="email"
                         placeholder="Enter your email address"
-                        className={`border-blue-200 focus:border-blue-400 focus:ring-blue-400 ${errors.email ? 'border-red-500' : ''}`}
+                        className={`border-blue-200 focus:border-blue-400 focus:ring-blue-400 ${
+                          errors.email ? "border-red-500" : ""
+                        }`}
                       />
                     )}
                   />
                   {errors.email && (
-                    <p className="text-sm text-red-500">{errors.email.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.email.message}
+                    </p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-gray-700 font-medium">Phone Number</Label>
+                  <Label className="text-gray-700 font-medium">
+                    Phone Number
+                  </Label>
                   <Controller
                     name="phone"
                     control={control}
                     rules={{
                       required: "Phone number is required",
                       validate: (value) => {
-                        if (!value) return "Phone number is required"
-                        return isValidPhoneNumber(value) || "Please enter a valid phone number"
-                      }
+                        if (!value) return "Phone number is required";
+                        return (
+                          isValidPhoneNumber(value) ||
+                          "Please enter a valid phone number"
+                        );
+                      },
                     }}
                     render={({ field }) => (
                       <div className="phone-input-container">
                         <PhoneInput
+                          defaultCountry="IN"
                           international
                           countryCallingCodeEditable={false}
                           value={field.value}
                           onChange={field.onChange}
-                          className={`flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${errors.phone ? 'border-red-500 focus-visible:ring-red-400' : 'border-blue-200 focus-visible:ring-blue-400'}`}
+                          className={`flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                            errors.phone
+                              ? "border-red-500 focus-visible:ring-red-400"
+                              : "border-blue-200 focus-visible:ring-blue-400"
+                          }`}
+                          inputClassName="flex-1
+    border border-blue-200 rounded-md px-3 py-2
+    focus:outline-none focus:ring-0 focus:border-blue-400"
+                          buttonClassName=" pl-2"
                         />
                       </div>
                     )}
                   />
                   {errors.phone && (
-                    <p className="text-sm text-red-500">{errors.phone.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.phone.message}
+                    </p>
                   )}
                 </div>
 
@@ -306,15 +377,20 @@ export default function SignupForm() {
                       name="country"
                       control={control}
                       render={({ field }) => (
-                        <Select value={field.value} onValueChange={field.onChange}>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
                           <SelectTrigger className="border-blue-200 focus:border-blue-400 focus:ring-blue-400">
                             <SelectValue placeholder="Select country" />
                           </SelectTrigger>
-                          <SelectContent>
-                            {countries.map((country) => (
-                              <SelectItem key={country.isoCode} value={country.isoCode}>
+                          <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md z-50">
+                            {countryOptions.map((country) => (
+                              <SelectItem
+                                key={country.isoCode}
+                                value={country.isoCode}
+                              >
                                 <div className="flex items-center gap-2">
-                                  <span>{country.flag}</span>
                                   <span>{country.name}</span>
                                 </div>
                               </SelectItem>
@@ -331,16 +407,22 @@ export default function SignupForm() {
                       name="city"
                       control={control}
                       render={({ field }) => (
-                        <Select 
-                          value={field.value} 
+                        <Select
+                          value={field.value}
                           onValueChange={field.onChange}
-                          disabled={!watchedCountry || cities.length === 0}
+                          disabled={!watchedCountry || cityOptions.length === 0}
                         >
                           <SelectTrigger className="border-blue-200 focus:border-blue-400 focus:ring-blue-400">
-                            <SelectValue placeholder={watchedCountry ? "Select city" : "Select country first"} />
+                            <SelectValue
+                              placeholder={
+                                watchedCountry
+                                  ? "Select city"
+                                  : "Select country first"
+                              }
+                            />
                           </SelectTrigger>
-                          <SelectContent>
-                            {cities.map((city) => (
+                          <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md z-50">
+                            {cityOptions.map((city) => (
                               <SelectItem key={city.name} value={city.name}>
                                 {city.name}
                               </SelectItem>
@@ -353,19 +435,112 @@ export default function SignupForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-gray-700 font-medium">Profile Photo</Label>
-                  <div className="border-2 border-dashed border-blue-200 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                  <Label
+                    htmlFor="password"
+                    className="text-gray-700 font-medium"
+                  >
+                    Password
+                  </Label>
+                  <Controller
+                    name="password"
+                    control={control}
+                    rules={{
+                      required: "Password is required",
+                      minLength: {
+                        value: 6,
+                        message: "Password must be at least 6 characters",
+                      },
+                    }}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        id="password"
+                        type="password"
+                        placeholder="Enter a password"
+                        className={`border-blue-200 focus:border-blue-400 focus:ring-blue-400 ${
+                          errors.password ? "border-red-500" : ""
+                        }`}
+                      />
+                    )}
+                  />
+                  {errors.password && (
+                    <p className="text-sm text-red-500">
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Confirm Password */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="confirmPassword"
+                    className="text-gray-700 font-medium"
+                  >
+                    Confirm Password
+                  </Label>
+                  <Controller
+                    name="confirmPassword"
+                    control={control}
+                    rules={{
+                      required: "Please confirm your password",
+                      validate: (value) =>
+                        value === watch("password") || "Passwords do not match",
+                    }}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        id="confirmPassword"
+                        type="password"
+                        placeholder="Re‑enter your password"
+                        className={`border-blue-200 focus:border-blue-400 focus:ring-blue-400 ${
+                          errors.confirmPassword ? "border-red-500" : ""
+                        }`}
+                      />
+                    )}
+                  />
+                  {errors.confirmPassword && (
+                    <p className="text-sm text-red-500">
+                      {errors.confirmPassword.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium">
+                    Profile Photo
+                  </Label>
+
+                  <div
+                    className="border-2 border-dashed border-blue-200 rounded-lg p-6 text-center
+               hover:border-blue-400 transition-colors"
+                  >
                     <input
+                      id="photo-upload"
                       type="file"
                       accept="image/*"
                       onChange={handleFileUpload}
                       className="hidden"
-                      id="photo-upload"
                     />
-                    <label htmlFor="photo-upload" className="cursor-pointer">
-                      <Upload className="h-8 w-8 text-blue-400 mx-auto mb-2" />
+
+                    <label
+                      htmlFor="photo-upload"
+                      className="cursor-pointer flex flex-col items-center"
+                    >
+                      {/* preview or default avatar */}
+                      {photoPreview ? (
+                        <img
+                          src={photoPreview}
+                          alt="Profile preview"
+                          className="w-24 h-24 rounded-full object-cover mb-2"
+                        />
+                      ) : (
+                        /* fallback icon */
+                        <User className="h-24 w-24 text-blue-400 mb-2 border border-blue-200 rounded-full p-6" />
+                      )}
+
                       <p className="text-sm text-gray-600">
-                        Click to upload your profile photo
+                        Click to {photoPreview ? "change" : "upload"} your
+                        profile photo
                       </p>
                     </label>
                   </div>
@@ -376,17 +551,26 @@ export default function SignupForm() {
             {currentStep === 2 && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-gray-700 font-medium">Availability</Label>
+                  <Label className="text-gray-700 font-medium">
+                    Availability
+                  </Label>
                   <Controller
                     name="availability"
                     control={control}
                     rules={{ required: "Please select availability type" }}
                     render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className={`border-blue-200 focus:border-blue-400 focus:ring-blue-400 ${errors.availability ? 'border-red-500' : ''}`}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger
+                          className={`border-blue-200 focus:border-blue-400 focus:ring-blue-400 ${
+                            errors.availability ? "border-red-500" : ""
+                          }`}
+                        >
                           <SelectValue placeholder="Select availability type" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md z-50">
                           <SelectItem value="time">By Time</SelectItem>
                           <SelectItem value="day">By Day</SelectItem>
                         </SelectContent>
@@ -394,19 +578,24 @@ export default function SignupForm() {
                     )}
                   />
                   {errors.availability && (
-                    <p className="text-sm text-red-500">{errors.availability.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.availability.message}
+                    </p>
                   )}
                 </div>
 
                 {watchedAvailability === "time" && (
                   <div className="space-y-2">
-                    <Label className="text-gray-700 font-medium">Time Slots</Label>
+                    <Label className="text-gray-700 font-medium">
+                      Time Slots
+                    </Label>
                     <Controller
                       name="timeSlots"
                       control={control}
                       rules={{
-                        validate: (value) => 
-                          value.length > 0 || "Please select at least one time slot"
+                        validate: (value) =>
+                          value.length > 0 ||
+                          "Please select at least one time slot",
                       }}
                       render={({ field }) => (
                         <div className="space-y-2">
@@ -415,7 +604,9 @@ export default function SignupForm() {
                               <button
                                 key={slot}
                                 type="button"
-                                onClick={() => toggleTimeSlot(slot, field.value)}
+                                onClick={() =>
+                                  toggleTimeSlot(slot, field.value)
+                                }
                                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                                   field.value.includes(slot)
                                     ? "bg-blue-600 text-white"
@@ -427,7 +618,9 @@ export default function SignupForm() {
                             ))}
                           </div>
                           {errors.timeSlots && (
-                            <p className="text-sm text-red-500">{errors.timeSlots.message}</p>
+                            <p className="text-sm text-red-500">
+                              {errors.timeSlots.message}
+                            </p>
                           )}
                         </div>
                       )}
@@ -437,13 +630,15 @@ export default function SignupForm() {
 
                 {watchedAvailability === "day" && (
                   <div className="space-y-2">
-                    <Label className="text-gray-700 font-medium">Available Days</Label>
+                    <Label className="text-gray-700 font-medium">
+                      Available Days
+                    </Label>
                     <Controller
                       name="days"
                       control={control}
                       rules={{
-                        validate: (value) => 
-                          value.length > 0 || "Please select at least one day"
+                        validate: (value) =>
+                          value.length > 0 || "Please select at least one day",
                       }}
                       render={({ field }) => (
                         <div className="space-y-2">
@@ -464,7 +659,9 @@ export default function SignupForm() {
                             ))}
                           </div>
                           {errors.days && (
-                            <p className="text-sm text-red-500">{errors.days.message}</p>
+                            <p className="text-sm text-red-500">
+                              {errors.days.message}
+                            </p>
                           )}
                         </div>
                       )}
@@ -473,13 +670,16 @@ export default function SignupForm() {
                 )}
 
                 <div className="space-y-2">
-                  <Label className="text-gray-700 font-medium">Skills Offered</Label>
+                  <Label className="text-gray-700 font-medium">
+                    Skills Offered
+                  </Label>
                   <Controller
                     name="skillsOffered"
                     control={control}
                     rules={{
-                      validate: (value) => 
-                        value.length >= 3 || "Please enter at least 3 skills offered"
+                      validate: (value) =>
+                        value.length >= 3 ||
+                        "Please enter at least 3 skills offered",
                     }}
                     render={({ field }) => (
                       <TagInput
@@ -493,13 +693,16 @@ export default function SignupForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-gray-700 font-medium">Skills Wanted</Label>
+                  <Label className="text-gray-700 font-medium">
+                    Skills Wanted
+                  </Label>
                   <Controller
                     name="skillsWanted"
                     control={control}
                     rules={{
-                      validate: (value) => 
-                        value.length >= 1 || "Please enter at least 1 skill wanted"
+                      validate: (value) =>
+                        value.length >= 1 ||
+                        "Please enter at least 1 skill wanted",
                     }}
                     render={({ field }) => (
                       <TagInput
@@ -525,7 +728,10 @@ export default function SignupForm() {
                       />
                     )}
                   />
-                  <Label htmlFor="isPublic" className="text-gray-700 font-medium">
+                  <Label
+                    htmlFor="isPublic"
+                    className="text-gray-700 font-medium"
+                  >
                     Make my profile public
                   </Label>
                 </div>
@@ -569,5 +775,8 @@ export default function SignupForm() {
         </CardContent>
       </Card>
     </div>
-  )
+    </div>
+  );
 }
+
+export default Signup
