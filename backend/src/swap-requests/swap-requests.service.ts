@@ -3,9 +3,12 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateSwapRequestDto } from './dto/create-swap-request.dto';
 import { GetSwapRequestsQueryDto } from './dto/get-requests.dto';
 import { SwapStatus } from '@prisma/client';
+import { EmailService } from 'src/email/email.service';
 @Injectable()
 export class SwapRequestsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService,
+    private readonly emailService:EmailService
+  ) {}
 
   async createSwapRequest(
     senderId: number,
@@ -157,6 +160,10 @@ async updateSwapStatus(
       // 1. Find the request
       const swapRequest = await this.prisma.swapRequest.findUnique({
         where: { id: BigInt(requestId) },
+        include:{
+          requester:true,
+          responder:true
+        }
       });
 
       if (!swapRequest) {
@@ -178,6 +185,12 @@ async updateSwapStatus(
           status,
         },
       });
+      if(status=='accepted'){
+        await this.emailService.sendRequestAcceptedMail(swapRequest.requester.email,swapRequest.requester.name,swapRequest.responder.name,'http://localhost:3000');
+      }
+      if(status=='rejected'){
+        await this.emailService.sendRequestRejectedMail(swapRequest.requester.email,swapRequest.requester.name,swapRequest.responder.name,'http://localhost:3000');
+      }
 
       return {
         message: `Swap request ${status} successfully.`,
