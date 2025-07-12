@@ -6,6 +6,7 @@ import Login from "./app/user/login";
 import ForgotPassword from "./app/user/forgot_password";
 import OTPVerification from "./app/user/verify_otp";
 import ResetPassword from "./app/user/change_password";
+import UserProfilePage from "./app/user/swap_deatail";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/verify-otp" element={<OTPVerification />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/swap-detail/:id" element={<UserProfilePage />} />
       </Routes>
     </BrowserRouter>
   );
