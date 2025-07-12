@@ -27,6 +27,8 @@ import OuterNavbar from "@/components/outer_navbar";
 import { Country, City } from "country-state-city";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
+import {useCloudinaryUpload} from "../../api/cloudupload";
+import SpinnerOverlay from "@/components/spinner";
 
 interface FormData {
   // Step 1: Personal Info
@@ -172,15 +174,26 @@ const TagInput = ({
     setValue("days", []);
   }, [watchedAvailability, setValue]);
 
+  const { mutate: uploadImage, isPending } = useCloudinaryUpload();
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files[0]) {
-      setValue("profilePhoto", files);
-      // create preview
-      const url = URL.createObjectURL(files[0]);
-      setPhotoPreview(url);
-    }
-  };
+  const files = e.target.files;
+  if (!files || !files[0]) return;
+
+  const file = files[0];
+
+  uploadImage(file, {
+    onSuccess: (publicUrl: string) => {
+      // save URL, not the raw file
+      setValue("profilePhoto", publicUrl, { shouldValidate: true });
+      setPhotoPreview(publicUrl);
+    },
+    onError: () => {
+      alert("Failed to upload image. Please try again.");
+    },
+  });
+};
+
 
   const toggleTimeSlot = (slot: string, currentSlots: string[]) => {
     const newSlots = currentSlots.includes(slot)
@@ -506,6 +519,7 @@ const TagInput = ({
                 </div>
 
                 <div className="space-y-2">
+                  {isPending ? <SpinnerOverlay/>: null}
                   <Label className="text-gray-700 font-medium">
                     Profile Photo
                   </Label>
@@ -520,6 +534,7 @@ const TagInput = ({
                       accept="image/*"
                       onChange={handleFileUpload}
                       className="hidden"
+                      disabled={isPending}
                     />
 
                     <label
