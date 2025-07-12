@@ -82,13 +82,11 @@ model swapRequest {
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
-  feedback          swapFeedback[]
 }
 
 model swapFeedback {
   id          BigInt     @id @default(autoincrement())
-  swap        swapRequest @relation(fields: [swapId], references: [id])
-  swapId      BigInt
+  
   reviewer    user       @relation("GivenFeedback", fields: [reviewerId], references: [id])
   reviewerId  BigInt
   reviewee    user       @relation("ReceivedFeedback", fields: [revieweeId], references: [id])

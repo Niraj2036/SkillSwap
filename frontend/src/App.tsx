@@ -7,6 +7,7 @@ import ForgotPassword from "./app/user/forgot_password";
 import OTPVerification from "./app/user/verify_otp";
 import ResetPassword from "./app/user/change_password";
 import UserProfilePage from "./app/user/swap_deatail";
+import SwapRequestsPage from "./app/user/swap_requests";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/swap-detail/:id" element={<UserProfilePage />} />
+        <Route path="/requests" element={<SwapRequestsPage />} />
       </Routes>
     </BrowserRouter>
   );
