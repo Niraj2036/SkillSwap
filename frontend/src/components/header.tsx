@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { User } from "lucide-react";
-import { cn } from "@/lib/utils"; // Import cn for conditional class joining
+import { cn } from "@/lib/utils"; 
 
 export function SiteHeader() {
   return (

@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { X, User } from "lucide-react";
 
-// shadcn/ui Form components and react-hook-form
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -20,7 +25,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// Define a Zod schema for validation
 const profileFormSchema = z.object({
   name: z
     .string()
@@ -32,15 +36,7 @@ const profileFormSchema = z.object({
     }),
   location: z.string().optional(),
   availability: z.string().optional(),
-  bio: z
-    .string()
-    .max(160, {
-      message: "Bio must not be longer than 160 characters.",
-    })
-    .min(4, {
-      message: "Bio must be at least 4 characters.",
-    })
-    .optional(),
+  profile: z.enum(["public", "private"]),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -69,7 +65,7 @@ export function ProfileForm() {
       name: "Marc Demo",
       location: "San Francisco, CA",
       availability: "Weekends, Evenings",
-      bio: "Passionate full-stack developer looking to swap skills and learn new things!",
+      profile: "public",
     },
     mode: "onChange",
   });
@@ -120,7 +116,7 @@ export function ProfileForm() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="grid gap-8 p-4 sm:p-6 bg-white rounded-xl shadow-lg"
+        className="grid gap-8 p-4 sm:p-6 rounded-xl shadow-lg"
       >
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
           <div className="flex flex-col items-center gap-3">
@@ -195,18 +191,26 @@ export function ProfileForm() {
             />
             <FormField
               control={form.control}
-              name="bio"
+              name="profile"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-semibold text-gray-700">
-                    About Me
+                    Profile
                   </FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Tell us about yourself..."
-                      className="min-h-[80px]"
-                      {...field}
-                    />
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select profile type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="public">Public</SelectItem>
+                        <SelectItem value="private">Private</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -255,9 +259,8 @@ export function ProfileForm() {
                 className="flex-1"
               />
               <Button
-                type="button" // Use type="button" to prevent form submission
+                type="button"
                 onClick={() => handleAddSkill("offered")}
-                className=""
               >
                 Add
               </Button>
@@ -302,8 +305,8 @@ export function ProfileForm() {
               />
               <Button
                 type="button" 
+                variant="secondary"
                 onClick={() => handleAddSkill("wanted")}
-                className=""
               >
                 Add
               </Button>
@@ -314,13 +317,12 @@ export function ProfileForm() {
         <div className="flex justify-end gap-4 mt-6">
           <Button
             type="button"
-            variant="outline"
             onClick={handleDiscard}
-            className=" bg-transparent"
+            variant="ghost"
           >
             Discard
           </Button>
-          <Button type="submit" className="">
+          <Button type="submit" className={buttonVariants({ variant: "secondary" })}>
             Save
           </Button>
         </div>
