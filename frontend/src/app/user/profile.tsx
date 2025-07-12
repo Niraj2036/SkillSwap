@@ -1,5 +1,5 @@
-import { ProfileForm } from "@/components/profile-form"
-import { SiteHeader } from "@/components/Header"
+import { ProfileForm } from "@/components/profile_form"
+import { SiteHeader } from "@/components/header"
 
 export default function UserProfilePage() {
   return (
