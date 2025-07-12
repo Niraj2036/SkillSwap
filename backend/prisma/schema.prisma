@@ -78,6 +78,7 @@ model swapRequest {
   responderSkill    skill        @relation("ResponderSkill", fields: [responderSkillId], references: [id])
   responderSkillId  BigInt
   status            SwapStatus   @default(pending)
+  message           String
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
