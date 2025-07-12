@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model user {
+  id                BigInt          @id @default(autoincrement())
+  name              String
+  email             String          @unique
+  profilePic        String
+  phone             String?
+  location          String?
+  profilePhoto      String?         // store URL
+  availability      String[]         // e.g., "Weekends, Evenings"
+  password          String?
+  isPublic          Boolean         @default(true)
+  status            UserStatus      @default(ACTIVE)
+  createdAt         DateTime        @default(now())
+  role              Role
+  offeredSkills     userOfferedSkill[]
+  wantedSkills      userWantedSkill[]
+  sentRequests      swapRequest[]   @relation("SentRequests")
+  receivedRequests  swapRequest[]   @relation("ReceivedRequests")
+  givenFeedback     swapFeedback[]  @relation("GivenFeedback")
+  receivedFeedback  swapFeedback[]  @relation("ReceivedFeedback")
+  otp               otps[]
+}
+
+model skill {
+  id              BigInt             @id @default(autoincrement())
+  name            String             @unique
+
+  offered         userOfferedSkill[]
+  wanted          userWantedSkill[]
+  requesterSkills swapRequest[]      @relation("RequesterSkill")
+  responderSkills swapRequest[]      @relation("ResponderSkill")
+}
+
+model userOfferedSkill {
+  id      BigInt   @id @default(autoincrement())
+  user    user     @relation(fields: [userId], references: [id])
+  userId  BigInt
+  skill   skill    @relation(fields: [skillId], references: [id])
+  skillId BigInt
+
+  @@unique([userId, skillId])
+}
+
+model userWantedSkill {
+  id      BigInt   @id @default(autoincrement())
+  user    user     @relation(fields: [userId], references: [id])
+  userId  BigInt
+  skill   skill    @relation(fields: [skillId], references: [id])
+  skillId BigInt
+
+  @@unique([userId, skillId])
+}
+
+model swapRequest {
+  id                BigInt       @id @default(autoincrement())
+  requester         user         @relation("SentRequests", fields: [requesterId], references: [id])
+  requesterId       BigInt
+  responder         user         @relation("ReceivedRequests", fields: [responderId], references: [id])
+  responderId       BigInt
+  requesterSkill    skill        @relation("RequesterSkill", fields: [requesterSkillId], references: [id])
+  requesterSkillId  BigInt
+  responderSkill    skill        @relation("ResponderSkill", fields: [responderSkillId], references: [id])
+  responderSkillId  BigInt
+  status            SwapStatus   @default(pending)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  feedback          swapFeedback[]
+}
+
+model swapFeedback {
+  id          BigInt     @id @default(autoincrement())
+  swap        swapRequest @relation(fields: [swapId], references: [id])
+  swapId      BigInt
+  reviewer    user       @relation("GivenFeedback", fields: [reviewerId], references: [id])
+  reviewerId  BigInt
+  reviewee    user       @relation("ReceivedFeedback", fields: [revieweeId], references: [id])
+  revieweeId  BigInt
+  rating      Int
+  feedback    String
+  createdAt   DateTime   @default(now())
+}
+
+model otps {
+  id        BigInt   @id @default(autoincrement())
+  otp       Int
+  expiry    DateTime
+  reason    String
+  userId    BigInt
+  email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      user     @relation(fields: [userId], references: [id])
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum SwapStatus {
+  pending
+  accepted
+  rejected
+}
+
+enum Role {
+  admin
+  user
+}
